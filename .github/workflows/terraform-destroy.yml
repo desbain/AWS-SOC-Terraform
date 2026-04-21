@@ -1,0 +1,64 @@
+###############################################################################
+# terraform-destroy.yml — Manual destroy workflow
+# Triggered ONLY by manual button click in GitHub Actions UI
+# Never runs automatically — requires human intent
+###############################################################################
+
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: "Type DESTROY to confirm you want to destroy all resources"
+        required: true
+        type: string
+
+env:
+  AWS_REGION: "us-east-2"
+
+jobs:
+  terraform-destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Validate confirmation
+        if: github.event.inputs.confirm_destroy != 'DESTROY'
+        run: |
+          echo "You must type DESTROY to confirm. Aborting."
+          exit 1
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        run: |
+          terraform destroy -auto-approve \
+            -var="analyst_email=${{ secrets.TF_VAR_analyst_email }}" \
+            -var="admin_ip_cidr=${{ secrets.TF_VAR_admin_ip_cidr }}" \
+            -var="environment=dev" \
+            -var="aws_region=us-east-2" \
+            -var="owner=SOC_Admin" \
+            -var="key_pair_name=SOC-Project-Key" \
+            -var="alarm_threshold=3" \
+            -var="budget_limit=1.00" \
+            -var="vpc_cidr=10.0.0.0/16" \
+            -var="subnet_cidr=10.0.1.0/24" \
+            -var="instance_type=t3.micro"
