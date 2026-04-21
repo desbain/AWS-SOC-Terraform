@@ -2,7 +2,7 @@
 
 **Portfolio Pillar:** Cloud Security | Infrastructure as Code | CI/CD
 **Status:** Complete
-**Author:** [Your Name] | Cybersecurity Analyst | SOC Engineer
+**Author:** [George Awa] | Cybersecurity Analyst | SOC Engineer
 **IaC Tool:** Terraform >= 1.6.0
 **AWS Provider:** hashicorp/aws ~> 5.0
 
