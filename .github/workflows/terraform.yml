@@ -1,0 +1,118 @@
+###############################################################################
+# terraform.yml — GitHub Actions CI/CD Pipeline
+# 
+# Trigger:
+#   Pull Request → runs terraform plan (shows what will change)
+#   Merge to main → runs terraform apply (deploys infrastructure)
+#
+# Secrets required in GitHub repository settings:
+#   AWS_ACCESS_KEY_ID
+#   AWS_SECRET_ACCESS_KEY
+#   TF_VAR_analyst_email
+#   TF_VAR_admin_ip_cidr
+###############################################################################
+
+name: Terraform SOC Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  TF_VERSION: "1.6.0"
+  AWS_REGION: "us-east-2"
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var="analyst_email=${{ secrets.TF_VAR_analyst_email }}" \
+            -var="admin_ip_cidr=${{ secrets.TF_VAR_admin_ip_cidr }}" \
+            -var="environment=dev" \
+            -var="aws_region=us-east-2" \
+            -var="owner=SOC_Admin" \
+            -var="key_pair_name=SOC-Project-Key" \
+            -var="alarm_threshold=3" \
+            -var="budget_limit=1.00" \
+            -var="vpc_cidr=10.0.0.0/16" \
+            -var="subnet_cidr=10.0.1.0/24" \
+            -out=tfplan
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: tfplan
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: |
+          terraform apply -auto-approve \
+            -var="analyst_email=${{ secrets.TF_VAR_analyst_email }}" \
+            -var="admin_ip_cidr=${{ secrets.TF_VAR_admin_ip_cidr }}" \
+            -var="environment=dev" \
+            -var="aws_region=us-east-2" \
+            -var="owner=SOC_Admin" \
+            -var="key_pair_name=SOC-Project-Key" \
+            -var="alarm_threshold=3" \
+            -var="budget_limit=1.00" \
+            -var="vpc_cidr=10.0.0.0/16" \
+            -var="subnet_cidr=10.0.1.0/24"
