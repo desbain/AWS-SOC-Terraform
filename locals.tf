@@ -3,9 +3,9 @@
 ################################################################################
 
 locals {
-    common_tags = {
-        Project = "AWS-SOC"
-        Environment = var.environment
-        ManagedBy = "Terraform"
-    }
+  common_tags = {
+    Project     = "AWS-SOC"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+  }
 }

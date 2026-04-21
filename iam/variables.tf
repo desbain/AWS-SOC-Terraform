@@ -1,6 +1,6 @@
 variable "environment" {
-    description = "Deployment environment"
-    type = string
+  description = "Deployment environment"
+  type        = string
 }
 
 variable "common_tags" {

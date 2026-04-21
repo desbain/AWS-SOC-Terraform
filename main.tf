@@ -39,25 +39,25 @@ module "iam" {
 }
 
 module "cloudtrail" {
-  source               = "./cloudtrail"
-  environment          = var.environment
-  account_id           = data.aws_caller_identity.current.account_id
-  cloudtrail_role_arn  = module.iam.cloudtrail_role_arn
-  common_tags          = local.common_tags
+  source              = "./cloudtrail"
+  environment         = var.environment
+  account_id          = data.aws_caller_identity.current.account_id
+  cloudtrail_role_arn = module.iam.cloudtrail_role_arn
+  common_tags         = local.common_tags
 
   depends_on = [module.iam]
 }
 
 module "vpc" {
-  source              = "./vpc"
-  environment         = var.environment
-  admin_ip_cidr       = var.admin_ip_cidr
-  flow_log_role_arn   = module.iam.vpc_flow_log_role_arn
-  common_tags         = local.common_tags
-  aws_region          = var.aws_region
-  depends_on = [module.iam]
-  vpc_cidr = var.vpc_cidr
-  subnet_cidr = var.subnet_cidr
+  source            = "./vpc"
+  environment       = var.environment
+  admin_ip_cidr     = var.admin_ip_cidr
+  flow_log_role_arn = module.iam.vpc_flow_log_role_arn
+  common_tags       = local.common_tags
+  aws_region        = var.aws_region
+  depends_on        = [module.iam]
+  vpc_cidr          = var.vpc_cidr
+  subnet_cidr       = var.subnet_cidr
 }
 
 module "ec2" {
@@ -68,8 +68,8 @@ module "ec2" {
   security_group_id    = module.vpc.soc_victim_sg_id
   iam_instance_profile = module.iam.host_logging_instance_profile
   common_tags          = local.common_tags
-  instance_type = var.instance_type
-  depends_on = [module.vpc, module.iam]
+  instance_type        = var.instance_type
+  depends_on           = [module.vpc, module.iam]
 }
 
 module "sns" {

@@ -4,18 +4,18 @@
 ####################################################################
 
 variable "aws_region" {
-    description = "AWS region to deploy all SOC resources into"
-    type = string
+  description = "AWS region to deploy all SOC resources into"
+  type        = string
 }
 
 variable "environment" {
-    description = "Deployment environment"
-    type = string
+  description = "Deployment environment"
+  type        = string
 }
 
 variable "owner" {
-    description = "Owner tag for all resources"
-    type = string
+  description = "Owner tag for all resources"
+  type        = string
 }
 
 variable "analyst_email" {
